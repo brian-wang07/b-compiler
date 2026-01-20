@@ -14,6 +14,7 @@ pub enum Keyword {
     Goto,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Operator {
     //arithmetic and bitwise
     Plus,
@@ -51,6 +52,7 @@ pub enum Operator {
     AssignAmp, //=&
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Delimiter {
     //()
     LParen,
@@ -65,10 +67,12 @@ pub enum Delimiter {
     Comma,
     Semicolon,
     Colon,
+    QMark
 }
 
 //main Token Enum
 
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     Keyword(Keyword),
     Operator(Operator),
@@ -81,6 +85,7 @@ pub enum Token {
     EOF, //End of file
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct SpannedToken {
     pub token: Token,
     pub span: Span,

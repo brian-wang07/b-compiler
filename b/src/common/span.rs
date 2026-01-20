@@ -5,6 +5,7 @@ pub struct Location {
     pub column: usize,
 }
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct Span {
     pub start: Location,
     pub end: Location,

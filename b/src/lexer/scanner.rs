@@ -9,6 +9,15 @@ pub struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
+    
+    pub fn new(source: &'a str) -> Self {
+        Self {
+            chars: source.chars().peekable(),
+            current_loc: Location { offset: 0, line: 1, column: 1 },
+            source
+        }
+    }
+
     //advances the scanner, consuming lexeme
     fn advance(&mut self) -> Option<char> {
         let c = self.chars.next()?; //if none return none
@@ -202,9 +211,11 @@ impl<'a> Iterator for Scanner<'a> {
             '[' => Ok(Token::Delimiter(Delimiter::LBrack)),
             ']' => Ok(Token::Delimiter(Delimiter::RBrack)),
             '{' => Ok(Token::Delimiter(Delimiter::LBrace)),
+            '}' => Ok(Token::Delimiter(Delimiter::RBrace)),
             ',' => Ok(Token::Delimiter(Delimiter::Comma)),
             ';' => Ok(Token::Delimiter(Delimiter::Semicolon)),
             ':' => Ok(Token::Delimiter(Delimiter::Colon)),
+            '?' => Ok(Token::Delimiter(Delimiter::QMark)),
 
             '0'..='9' => self.read_number(c),
             'a'..='z' | 'A'..='Z' | '_' => self.read_identifier(c),
@@ -216,14 +227,51 @@ impl<'a> Iterator for Scanner<'a> {
                 else if self.match_char('-') { Ok(Token::Operator(Operator::AssignMinus)) }
                 else if self.match_char('*') { Ok(Token::Operator(Operator::AssignStar)) }
                 else if self.match_char('/') { Ok(Token::Operator(Operator::AssignSlash)) }
+                else if self.match_char('%') { Ok(Token::Operator(Operator::AssignPercent)) }
                 else if self.match_char('&') { Ok(Token::Operator(Operator::AssignAmp)) }
                 else { Ok(Token::Operator(Operator::Assign)) }
             }
 
+            '+' => {
+                if self.match_char('+') { Ok(Token::Operator(Operator::Inc)) }
+                else { Ok(Token::Operator(Operator::Plus)) }
+            }
+
+            '-' => {
+                if self.match_char('-') { Ok(Token::Operator(Operator::Dec)) }
+                else { Ok(Token::Operator(Operator::Minus)) }
+            }
+
+            '*' => Ok(Token::Operator(Operator::Star)),
+            '/' => Ok(Token::Operator(Operator::Slash)),
+            '%' => Ok(Token::Operator(Operator::Percent)),
+            '|' => Ok(Token::Operator(Operator::Bar)),
+            '^' => Ok(Token::Operator(Operator::Caret)),
+            '!' => Ok(Token::Operator(Operator::Bang)),
+            '~' => Ok(Token::Operator(Operator::Tilde)),
+            '&' => Ok(Token::Operator(Operator::Amp)),
+
+            '>' => {
+                if self.match_char('>') { Ok(Token::Operator(Operator::RShift)) }
+                else if self.match_char('=') { Ok(Token::Operator(Operator::GreaterEq)) }
+                else { Ok(Token::Operator(Operator::Greater)) }
+            }
+
+            '<' => {
+                if self.match_char('<') { Ok(Token::Operator(Operator::LShift)) }
+                else if self.match_char('=') { Ok(Token::Operator(Operator::LessEq)) }
+                else { Ok(Token::Operator(Operator::Greater)) }
+            }
 
             _ => Err(LexError::UnexpectedChar(c, self.current_loc)),
 
-        }
-        None
+        };
+        
+        Some(result.map(|token| SpannedToken {
+            token,
+            span: Span { start: start_loc, end: self.current_loc}
+        }))
+
+
     }
 }
