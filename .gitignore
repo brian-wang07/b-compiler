@@ -9,5 +9,4 @@
 !Cargo.toml
 !.gitignore
 
-
-*/target/
+target/
