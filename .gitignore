@@ -3,5 +3,6 @@
 !*.rs
 !*.b
 !*.pdf
-!*.lock
-!*.toml
+!Cargo.lock
+!Cargo.toml
+!.gitignore
