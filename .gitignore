@@ -4,4 +4,4 @@
 !*.b
 !*.pdf
 !*.lock
-!.toml
+!*.toml
