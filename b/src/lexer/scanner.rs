@@ -55,7 +55,7 @@ impl<'a> Scanner<'a> {
     }
 
     //scan numeric literals; in B, octal numbers are denoted with a leading 0. 
-    fn read_number(&mut self, first_char: char) -> Result<Token, LexError> { //enum variants
+    fn read_number(&mut self, first_char: char) -> Result<Token<'a>, LexError> { //enum variants
                                                                               //cannot be return
                                                                               //types
         let start_offset = self.current_loc.offset - first_char.len_utf8();
@@ -79,7 +79,7 @@ impl<'a> Scanner<'a> {
     }
 
     //scan variable identifiers/keywords; read until peek() not alphanumeric
-    fn read_identifier(&mut self, first_char: char) -> Result<Token, LexError> {
+    fn read_identifier(&mut self, first_char: char) -> Result<Token<'a>, LexError> {
         let start_offset = self.current_loc.offset - first_char.len_utf8();
 
         //advance to end of keyword/variable name
@@ -105,14 +105,14 @@ impl<'a> Scanner<'a> {
             "default" => Token::Keyword(Keyword::Default),
             "return" => Token::Keyword(Keyword::Return),
             "goto" => Token::Keyword(Keyword::Goto),
-            _ => Token::Identifier(lexeme.to_string()),
+            _ => Token::Identifier(lexeme),
         };
 
         Ok(token)
 
     }
 
-    fn read_str(&mut self) -> Result<Token, LexError> {
+    fn read_str(&mut self) -> Result<Token<'a>, LexError> {
         let mut content = String::new();
 
         while let Some(c) = self.advance() {
@@ -184,7 +184,7 @@ impl<'a> Scanner<'a> {
         Err(LexError::UnterminatedComment(self.current_loc))
     }
 
-    fn read_char_literal(&mut self) -> Result<Token, LexError> {
+    fn read_char_literal(&mut self) -> Result<Token<'a>, LexError> {
         //scanner has consumed '
         //Historically, B compilers allowed char literals to store 0, 1, or 2 characters.
         let mut chars = Vec::new();
@@ -223,7 +223,7 @@ impl<'a> Scanner<'a> {
 }
 
 impl<'a> Iterator for Scanner<'a> {
-    type Item = Result<SpannedToken, LexError>;
+    type Item = Result<SpannedToken<'a>, LexError>;
 
     fn next(&mut self) -> Option<Self::Item> { 
 
@@ -303,11 +303,12 @@ impl<'a> Iterator for Scanner<'a> {
 
         };
         
-        Some(result.map(|token| SpannedToken {
-            token,
+        let token = result.map(|t| SpannedToken {
+            token: t,
             span: Span { start: start_loc, end: self.current_loc}
-        }))
+        });
 
+        Some(token)
 
     }
 }

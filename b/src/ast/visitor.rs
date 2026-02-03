@@ -66,7 +66,7 @@ pub fn walk_expr<T, V: ExprVisitor<T>>(visitor: &mut V, expr: &Expr) -> T {
       visitor.visit_unary(operator, right)
     }
 
-    Expr::Logical { left, operator, right } => {
+    Expr::Bitwise { left, operator, right } => {
       visitor.visit_logical(left, operator, right)
     }
 

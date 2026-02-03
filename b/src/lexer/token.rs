@@ -14,7 +14,7 @@ pub enum Keyword {
     Goto,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Operator {
     //arithmetic and bitwise
     Plus,
@@ -30,7 +30,7 @@ pub enum Operator {
     Bang, // ! Logical NOT
     Tilde, //~ Bitwise NOT/Ones compliment
 
-    //Comparison - Reversed Compound Assignment (=+ instead of +=)
+    //Comparison 
     Equal,  //==
     NotEqual, 
     Less,
@@ -42,7 +42,7 @@ pub enum Operator {
     Inc, //++
     Dec, //--
 
-    //Assignment
+    //Assignment - Reversed Compound Assignment (=+ instead of +=)
     Assign, //=
     AssignPlus, //=+
     AssignMinus, //=-
@@ -52,7 +52,7 @@ pub enum Operator {
     AssignAmp, //=&
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Delimiter {
     //()
     LParen,
@@ -73,11 +73,11 @@ pub enum Delimiter {
 //main Token Enum
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Token {
+pub enum Token<'a> {
     Keyword(Keyword),
     Operator(Operator),
     Delimiter(Delimiter),
-    Identifier(String),
+    Identifier(&'a str),
     Integer(i64),
     // * instead of / used for escape characters
     StringLiteral(String),
@@ -86,7 +86,7 @@ pub enum Token {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct SpannedToken {
-    pub token: Token,
+pub struct SpannedToken<'a> {
+    pub token: Token<'a>,
     pub span: Span,
 }
