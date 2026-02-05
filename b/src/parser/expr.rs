@@ -43,6 +43,8 @@ impl <'a> Parser<'a> {
         Ok(Expr::Grouping{ expression: Box::new(inner) })
       },
 
+
+
       _ => Err(ParseError::UnknownToken(t.clone())),
             
       }
@@ -90,7 +92,12 @@ impl <'a> Parser<'a> {
           },
 
           
-          Delimiter::QMark => unimplemented!(), //DO THIS 
+          Delimiter::QMark => {
+            let then_branch = self.parse_expression(0)?;
+            self.expect(&Token::Delimiter(Delimiter::Colon))?;
+            let else_branch = self.parse_expression(Precedence::Ternary.bp().1)?;
+            Ok(Expr::Ternary { condition: Box::new(left), then_branch: Box::new(then_branch), else_branch: Box::new(else_branch) })
+          }
         
           _ => Err(ParseError::UnknownToken(op))
 
@@ -129,20 +136,12 @@ impl <'a> Parser<'a> {
 
 
   }
-
-  
-
-
     ///pratt style parser: Top down, LL(1) recursive parser
     /// Precedence levels are defined in precedence.rs. Instead of a recursively defined formal grammar, the binding power
     /// of the operators define the order of precedence.     
   pub fn parse_expression(&mut self, min_prec: u8) -> Result<Expr<'a>, ParseError<'a>> {
-
-
-
     //parse left hand side (nud)
     let mut left = self.nud()?;
-
     //while left bp has higher precedence than min bp (right bp), parse left denotation
     while self.peek_precedence().bp().0 > min_prec {
       left = self.led(left)?;

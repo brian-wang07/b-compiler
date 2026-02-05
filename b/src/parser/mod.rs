@@ -117,8 +117,7 @@ impl<'a> Parser<'a> {
       },
 
       Token::Delimiter(Delimiter::QMark) => Precedence::Ternary,
-      Token::Delimiter(Delimiter::LParen) | Token::Delimiter(Delimiter::LBrack) |
-      Token::Delimiter(Delimiter::RParen) | Token::Delimiter(Delimiter::RBrack) => Precedence::Postfix,
+      Token::Delimiter(Delimiter::LParen) | Token::Delimiter(Delimiter::LBrack) => Precedence::Postfix,
       _ => Precedence::None,
     }
   }
@@ -142,9 +141,10 @@ impl<'a> Parser<'a> {
       },
 
       Token::Delimiter(Delimiter::QMark) => Precedence::Ternary,
-      Token::Delimiter(Delimiter::LParen) | Token::Delimiter(Delimiter::LBrack) |
-      Token::Delimiter(Delimiter::RParen) | Token::Delimiter(Delimiter::RBrack) => Precedence::Postfix,
+      Token::Delimiter(Delimiter::LParen) | Token::Delimiter(Delimiter::LBrack) => Precedence::Postfix,
       _ => Precedence::None,
     }
   }
 }
+
+

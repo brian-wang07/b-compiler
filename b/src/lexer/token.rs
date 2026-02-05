@@ -1,4 +1,5 @@
 use crate::common::span::Span;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Keyword {
@@ -89,4 +90,90 @@ pub enum Token<'a> {
 pub struct SpannedToken<'a> {
     pub token: Token<'a>,
     pub span: Span,
+}
+
+impl fmt::Display for Keyword {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Keyword::Auto => "auto",
+            Keyword::Extrn => "extrn",
+            Keyword::If => "if",
+            Keyword::Else => "else",
+            Keyword::While => "while",
+            Keyword::Switch => "switch",
+            Keyword::Case => "case",
+            Keyword::Default => "default",
+            Keyword::Return => "return",
+            Keyword::Goto => "goto",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl fmt::Display for Operator {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Operator::Plus => "+",
+            Operator::Minus => "-",
+            Operator::Star => "*",
+            Operator::Slash => "/",
+            Operator::Percent => "%",
+            Operator::Amp => "&",
+            Operator::Bar => "|",
+            Operator::Caret => "^",
+            Operator::LShift => "<<",
+            Operator::RShift => ">>",
+            Operator::Bang => "!",
+            Operator::Tilde => "~",
+            Operator::Equal => "==",
+            Operator::NotEqual => "!=",
+            Operator::Less => "<",
+            Operator::Greater => ">",
+            Operator::LessEq => "<=",
+            Operator::GreaterEq => ">=",
+            Operator::Inc => "++",
+            Operator::Dec => "--",
+            Operator::Assign => "=",
+            Operator::AssignPlus => "=+",
+            Operator::AssignMinus => "=-",
+            Operator::AssignStar => "=*",
+            Operator::AssignSlash => "=/",
+            Operator::AssignPercent => "=%",
+            Operator::AssignAmp => "=&",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl fmt::Display for Delimiter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            Delimiter::LParen => "(",
+            Delimiter::RParen => ")",
+            Delimiter::LBrack => "[",
+            Delimiter::RBrack => "]",
+            Delimiter::LBrace => "{",
+            Delimiter::RBrace => "}",
+            Delimiter::Comma => ",",
+            Delimiter::Semicolon => ";",
+            Delimiter::Colon => ":",
+            Delimiter::QMark => "?",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl<'a> fmt::Display for Token<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Token::Keyword(k) => write!(f, "{}", k),
+            Token::Operator(o) => write!(f, "{}", o),
+            Token::Delimiter(d) => write!(f, "{}", d),
+            Token::Identifier(s) => write!(f, "{}", s),
+            Token::Integer(i) => write!(f, "{}", i),
+            Token::StringLiteral(s) => write!(f, "\"{}\"", s),
+            Token::CharLiteral(c) => write!(f, "{}", c), // Print as integer value
+            Token::EOF => write!(f, "EOF"),
+        }
+    }
 }

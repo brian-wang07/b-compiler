@@ -1,5 +1,6 @@
 use crate::lexer::token::{Token};
 pub mod visitor;
+pub mod pretty_printer;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct AutoDecl<'a> {
