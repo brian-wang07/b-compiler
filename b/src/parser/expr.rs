@@ -93,7 +93,7 @@ impl <'a> Parser<'a> {
 
           
           Delimiter::QMark => {
-            let then_branch = self.parse_expression(0)?;
+            let then_branch = self.parse_expression(Precedence::Ternary.bp().1)?;
             self.expect(&Token::Delimiter(Delimiter::Colon))?;
             let else_branch = self.parse_expression(Precedence::Ternary.bp().1)?;
             Ok(Expr::Ternary { condition: Box::new(left), then_branch: Box::new(then_branch), else_branch: Box::new(else_branch) })

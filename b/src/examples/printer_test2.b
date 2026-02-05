@@ -1,1 +1,1 @@
-out = a - b - c << arr[i] + 1
+a ? b : c ? d : e
