@@ -1,3 +1,4 @@
+#![allow(dead_code, unused)]
 use crate::lexer::token::{SpannedToken,Token, Operator, Delimiter};
 use crate::common::span::Span;
 use crate::parser::precedence::Precedence;
@@ -12,7 +13,8 @@ pub enum ParseError<'a> {
   UnexpectedToken(Expected<'a>),
   UnknownToken(SpannedToken<'a>),
   UnexpectedEOF,
-  RValueAssign(SpannedToken<'a>)
+  RValueAssign(SpannedToken<'a>),
+  AutoRedecl,
 }
 
 #[derive(Debug)]
@@ -99,29 +101,9 @@ impl<'a> Parser<'a> {
   //peek next token's precedence. Operations such as ++ and -- are set as postfix, as peek_precedence is only called after the LHS
   //has been parsed. prefix unary operators (such as -, !, ~, --, ++) are handled as nud(unary), and have no binding power.
   fn peek_precedence(&self) -> Precedence {
-    match &self.peek().token {
-      Token::Operator(op) => match op {
-        Operator::Assign | Operator::AssignPlus | Operator::AssignMinus |
-        Operator::AssignStar | Operator::AssignSlash | Operator::AssignPercent |
-        Operator::AssignAmp => Precedence::Assignment,
-        Operator::Bar => Precedence::BitOr,
-        Operator::Caret => Precedence::BitXor,
-        Operator::Amp => Precedence::BitAnd,
-        Operator::Equal | Operator::NotEqual => Precedence::Equality,
-        Operator::Less | Operator::Greater | Operator::LessEq | Operator::GreaterEq => Precedence::Comparison,
-        Operator::LShift | Operator::RShift => Precedence::Shift,
-        Operator::Plus | Operator::Minus => Precedence::Addition,
-        Operator::Star | Operator::Slash | Operator::Percent => Precedence::Multiplication,
-        Operator::Inc | Operator::Dec => Precedence::Postfix,
-        _ => Precedence::None,
-      },
-
-      Token::Delimiter(Delimiter::QMark) => Precedence::Ternary,
-      Token::Delimiter(Delimiter::LParen) | Token::Delimiter(Delimiter::LBrack) => Precedence::Postfix,
-      _ => Precedence::None,
-    }
+    self.get_precedence(&self.peek().token)
   }
-  //why did i do this? legit you can call peek() in get_precedence...
+
   fn get_precedence(&self, tok: &Token) -> Precedence {
      match tok {
       Token::Operator(op) => match op {

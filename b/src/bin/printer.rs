@@ -34,11 +34,10 @@ fn run(source: &str) {
       }
     }
 
-    println!("Tokens:");
-    for token in &toks {
-      println!(" {:?}", token);
+    for tok in &toks{
+        println!("{}", tok.token);
     }
-    println!();
+
 
     let mut parser = Parser::new(&toks);
     

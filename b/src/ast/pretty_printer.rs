@@ -1,6 +1,6 @@
 use crate::ast::visitor::{ExprVisitor, walk_expr};
 use crate::ast::Expr;
-use crate::lexer::token::Token;
+use crate::lexer::token::SpannedToken;
 
 pub struct AstPrinter;
 
@@ -30,12 +30,12 @@ impl AstPrinter {
 
 impl ExprVisitor<String> for AstPrinter {
 
-  fn visit_binary(&mut self, left: &Expr, operator: &Token, right: &Expr) -> String {
-    self.parenthesize(&format!("{}", operator), &[left, right])
+  fn visit_binary(&mut self, left: &Expr, operator: &SpannedToken, right: &Expr) -> String {
+    self.parenthesize(&format!("{}", operator.token), &[left, right])
   }
   
-  fn visit_assign(&mut self, lvalue: &Expr, operator: &Token, value: &Expr) -> String {
-    self.parenthesize(&format!("{}", operator), &[lvalue, value])
+  fn visit_assign(&mut self, lvalue: &Expr, operator: &SpannedToken, value: &Expr) -> String {
+    self.parenthesize(&format!("{}", operator.token), &[lvalue, value])
   }
 
   fn visit_call(&mut self, callee: &Expr, arguments: &[Box<Expr>]) -> String {
@@ -57,27 +57,27 @@ impl ExprVisitor<String> for AstPrinter {
     self.parenthesize("group", &[expression])
   }
 
-  fn visit_literal(&mut self, value: &Token ) -> String {
-    format!("{}", value)
+  fn visit_literal(&mut self, value: &SpannedToken ) -> String {
+    format!("{}", value.token)
   }
 
-  fn visit_logical(&mut self, left: &Expr, operator: &Token, right: &Expr) -> String {
-    self.parenthesize(&format!("{}", operator), &[left, right])
+  fn visit_logical(&mut self, left: &Expr, operator: &SpannedToken, right: &Expr) -> String {
+    self.parenthesize(&format!("{}", operator.token), &[left, right])
   }
 
-  fn visit_postfix(&mut self, left: &Expr, operator: &Token) -> String {
-      self.parenthesize(&format!("{} post", operator), &[left])
+  fn visit_postfix(&mut self, left: &Expr, operator: &SpannedToken) -> String {
+      self.parenthesize(&format!("{} post", operator.token), &[left])
   }
 
   fn visit_ternary(&mut self, condition: &Expr, then_branch: &Expr, else_branch: &Expr) -> String {
       self.parenthesize("?:", &[condition, then_branch, else_branch])
   }
 
-  fn visit_unary(&mut self, operator: &Token, right: &Expr) -> String {
-      self.parenthesize(&format!("{}", operator), &[right])
+  fn visit_unary(&mut self, operator: &SpannedToken, right: &Expr) -> String {
+      self.parenthesize(&format!("{}", operator.token), &[right])
   }
 
-  fn visit_variable(&mut self, name: &Token) -> String {
-      format!("{}", name)
+  fn visit_variable(&mut self, name: &SpannedToken) -> String {
+      format!("{}", name.token)
   }
 }

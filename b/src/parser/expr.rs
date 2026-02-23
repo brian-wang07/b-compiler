@@ -9,7 +9,7 @@ impl <'a> Parser<'a> {
 
   fn is_lvalue(&self, expr: &Expr<'a>) -> bool {
     //lvalues are only variables, array indicies, and dereferences
-    if matches!(expr, Expr::Variable {..}| Expr::Get {..} | Expr::Unary { operator: Token::Operator(Operator::Star), .. } ) {
+    if matches!(expr, Expr::Variable {..}| Expr::Get {..} | Expr::Unary { operator: SpannedToken{ token: Token::Operator(Operator::Star), .. }, .. }) {
       return true;
     }
     false
@@ -25,16 +25,16 @@ impl <'a> Parser<'a> {
     match &t.token {
 
       Token::Integer(_) | Token::CharLiteral(_) |
-      Token::StringLiteral(_) => Ok(Expr::Literal{ value: t.token.clone() }),
+      Token::StringLiteral(_) => Ok(Expr::Literal{ value: t.clone() }),
 
-      Token::Identifier(_) => Ok(Expr::Variable{ name: t.token.clone() }),
+      Token::Identifier(_) => Ok(Expr::Variable{ name: t.clone() }),
 
       Token::Operator(Operator::Plus) | Token::Operator(Operator::Minus) | 
       Token::Operator(Operator::Bang) | Token::Operator(Operator::Tilde) |
       Token::Operator(Operator::Inc) | Token::Operator(Operator::Dec) |
       Token::Operator(Operator::Amp) | Token::Operator(Operator::Star) => {
         let right = self.parse_expression(Precedence::Unary.bp().1); //rhbp
-        Ok(Expr::Unary{ operator: t.token.clone(), right: Box::new(right.unwrap()) })
+        Ok(Expr::Unary{ operator: t.clone(), right: Box::new(right.unwrap()) })
       },
 
       Token::Delimiter(Delimiter::LParen) => {
@@ -62,7 +62,7 @@ impl <'a> Parser<'a> {
       Token::Integer(_) | Token::StringLiteral(_) | 
       Token::CharLiteral(_) | Token::Identifier(_) => Err(ParseError::UnknownToken(op)),
 
-      Token::Operator(Operator::Inc) | Token::Operator(Operator::Dec) => Ok(Expr::Postfix{left: Box::new(left), operator: op.token}),
+      Token::Operator(Operator::Inc) | Token::Operator(Operator::Dec) => Ok(Expr::Postfix{left: Box::new(left), operator: op}),
 
       Token::Delimiter(t) => {
         match t {
@@ -111,17 +111,17 @@ impl <'a> Parser<'a> {
           Operator::Plus | Operator::Minus | Operator::Star | Operator::Slash |
           Operator::Percent | Operator::Equal | Operator::NotEqual |
           Operator::Less | Operator::LessEq | Operator::Greater | 
-          Operator::GreaterEq => Ok(Expr::Binary {left: Box::new(left), operator: op.token, right: Box::new(right)}),
+          Operator::GreaterEq => Ok(Expr::Binary {left: Box::new(left), operator: op, right: Box::new(right)}),
 
           Operator::Amp | Operator::Bar | Operator::Caret | Operator::LShift |
-          Operator::RShift | Operator::Tilde => Ok(Expr::Bitwise {left: Box::new(left), operator: op.token, right: Box::new(right)}),
+          Operator::RShift | Operator::Tilde => Ok(Expr::Bitwise {left: Box::new(left), operator: op, right: Box::new(right)}),
 
           //assign: left must be lvalue
           Operator::Assign | Operator::AssignAmp | Operator::AssignMinus |
           Operator::AssignPercent | Operator::AssignPlus | Operator::AssignSlash |
           Operator::AssignStar => {
             if self.is_lvalue(&left) {
-              return Ok(Expr::Assign{lvalue: Box::new(left), operator: op.token, value: Box::new(right)});
+              return Ok(Expr::Assign{lvalue: Box::new(left), operator: op, value: Box::new(right)});
             }
             Err(ParseError::RValueAssign(op))
           }
