@@ -37,8 +37,8 @@ pub enum Stmt<'a> {
   If { condition: Box<Expr<'a>>, then_branch: Box<Stmt<'a>>, else_branch: Option<Box<Stmt<'a>>> }, //else branch can fall through
   //Var { name: SpannedToken<'a>, initializer: Box<Expr<'a>>},
   While { condition: Box<Expr<'a>>, body: Box<Stmt<'a>> },
-  Switch { condition: Box<Expr<'a>>, body: Box<Stmt<'a>> },
-  Case { value: SpannedToken<'a> },
+  Switch { condition: Box<Expr<'a>>, cases: Vec<Stmt<'a>> },
+  Case { value: SpannedToken<'a>, body: Box<Stmt<'a>> },
   Default,
   Label { name: SpannedToken<'a>, body: Box<Stmt<'a>> },
   Goto { expression: Box<Expr<'a>> },

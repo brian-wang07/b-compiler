@@ -14,7 +14,8 @@ pub enum ParseError<'a> {
   UnknownToken(SpannedToken<'a>),
   UnexpectedEOF,
   RValueAssign(SpannedToken<'a>),
-  AutoRedecl,
+  AutoRedecl(SpannedToken<'a>),
+  UnspecifiedArraySizeInitialization(SpannedToken<'a>),
 }
 
 #[derive(Debug)]

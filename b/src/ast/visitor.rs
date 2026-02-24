@@ -27,8 +27,8 @@ pub trait StmtVisitor<T> {
   fn visit_if(&mut self, condition: &Expr, then_branch: &Stmt, else_branch: Option<&Stmt>) -> T;
   //fn visit_var(&mut self, name: &SpannedToken, initializer: &Expr) -> T;
   fn visit_while(&mut self, condition: &Expr, body: &Stmt) -> T;
-  fn visit_switch(&mut self, condition: &Expr, body: &Stmt) -> T;
-  fn visit_case(&mut self, value: &SpannedToken) -> T;
+  fn visit_switch(&mut self, condition: &Expr, cases: &[Stmt]) -> T;
+  fn visit_case(&mut self, value: &SpannedToken, body: &Stmt) -> T;
   fn visit_default(&mut self) -> T;
   fn visit_label(&mut self, name: &SpannedToken, body: &Stmt) -> T;
   fn visit_goto(&mut self, expression: &Expr) -> T;
@@ -123,12 +123,12 @@ pub fn walk_stmt<T, V: StmtVisitor<T>>(visitor: &mut V, stmt: &Stmt) -> T {
       visitor.visit_while(condition, body)
     }
 
-    Stmt::Switch { condition, body } => {
-      visitor.visit_switch(condition, body)
+    Stmt::Switch { condition, cases } => {
+      visitor.visit_switch(condition, cases)
     }
 
-    Stmt::Case { value } => {
-      visitor.visit_case(value)
+    Stmt::Case { value, body } => {
+      visitor.visit_case(value, body)
     }
 
     Stmt::Default => {
