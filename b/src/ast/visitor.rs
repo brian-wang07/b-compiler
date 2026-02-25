@@ -8,7 +8,7 @@ use crate::lexer::token::SpannedToken;
 pub trait ExprVisitor<T> {
   fn visit_assign(&mut self, lvalue: &Expr, operator: &SpannedToken, value: &Expr) -> T;
   fn visit_binary(&mut self, left: &Expr, operator: &SpannedToken, right: &Expr) -> T;
-  fn visit_call(&mut self, callee: &Expr, arguments: &[Box<Expr>]) -> T;
+  fn visit_call(&mut self, callee: &Expr, arguments: &[Expr]) -> T;
   fn visit_grouping(&mut self, expression: &Expr) -> T;
   fn visit_literal(&mut self, value: &SpannedToken ) -> T;
   fn visit_unary(&mut self, operator: &SpannedToken, right: &Expr) -> T;
@@ -21,19 +21,24 @@ pub trait ExprVisitor<T> {
 
 pub trait StmtVisitor<T> {
   fn visit_block(&mut self, statements: &[Stmt]) -> T;
-  fn visit_auto(&mut self, declarations: &Vec<AutoDecl>) -> T;
-  fn visit_extrn(&mut self, names: &Vec<SpannedToken>) -> T;
+  fn visit_auto(&mut self, declarations: &[AutoDecl]) -> T;
+  fn visit_extrn(&mut self, names: &[SpannedToken]) -> T;
   fn visit_expression(&mut self, expression: &Expr) -> T;
   fn visit_if(&mut self, condition: &Expr, then_branch: &Stmt, else_branch: Option<&Stmt>) -> T;
-  //fn visit_var(&mut self, name: &SpannedToken, initializer: &Expr) -> T;
   fn visit_while(&mut self, condition: &Expr, body: &Stmt) -> T;
   fn visit_switch(&mut self, condition: &Expr, cases: &[Stmt]) -> T;
   fn visit_case(&mut self, value: &SpannedToken, body: &Stmt) -> T;
-  fn visit_default(&mut self) -> T;
+  fn visit_default(&mut self, body: &Stmt) -> T;
   fn visit_label(&mut self, name: &SpannedToken, body: &Stmt) -> T;
   fn visit_goto(&mut self, expression: &Expr) -> T;
   fn visit_return(&mut self, value: Option<&Expr>) -> T;
   fn visit_null(&mut self) -> T;
+}
+
+//top level constructs; walk program iterates over items
+pub trait ItemVisitor<T> {
+  fn visit_function(&mut self, name: &SpannedToken, params: &[SpannedToken], body: &Stmt) -> T;
+  fn visit_global(&mut self, decls: &[GlobalDecl]) -> T;
 }
 
 //Abstract interface: Handle recursion logic here. Matching expr allows for exhaustive checks, and improve runtime performance through static dispatch (no vtable lookup).
@@ -86,9 +91,7 @@ pub fn walk_expr<T, V: ExprVisitor<T>>(visitor: &mut V, expr: &Expr) -> T {
     Expr::Postfix { left, operator } => {
       visitor.visit_postfix(left, operator)
     }
-
   }
-
 }
 
 pub fn walk_stmt<T, V: StmtVisitor<T>>(visitor: &mut V, stmt: &Stmt) -> T {
@@ -131,8 +134,8 @@ pub fn walk_stmt<T, V: StmtVisitor<T>>(visitor: &mut V, stmt: &Stmt) -> T {
       visitor.visit_case(value, body)
     }
 
-    Stmt::Default => {
-      visitor.visit_default()
+    Stmt::Default {body} => {
+      visitor.visit_default(body)
     }
 
     Stmt::Label { name, body } => {
@@ -150,9 +153,21 @@ pub fn walk_stmt<T, V: StmtVisitor<T>>(visitor: &mut V, stmt: &Stmt) -> T {
     Stmt::Null => {
       visitor.visit_null()
     }
-  
-
   }
+}
 
-  
+
+pub fn walk_item<T, V: ItemVisitor<T>>(visitor: &mut V, item: &Item) -> T {
+  match item {
+
+    Item::Function(Function {
+      name, params, body
+    }) => {
+      visitor.visit_function(name, params, body)
+    }
+
+    Item::Global(decls) => {
+      visitor.visit_global(decls)
+    }
+  }
 }

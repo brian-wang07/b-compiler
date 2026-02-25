@@ -55,7 +55,7 @@ impl<'a> Scanner<'a> {
     }
 
     //scan numeric literals; in B, octal numbers are denoted with a leading 0. 
-    fn read_number(&mut self, first_char: char) -> Result<Token<'a>, LexError> { //enum variants
+    fn read_number(&mut self, first_char: char, is_negative: bool) -> Result<Token<'a>, LexError> { //enum variants
                                                                               //cannot be return
                                                                               //types
         let start_offset = self.current_loc.offset - first_char.len_utf8();
@@ -71,7 +71,12 @@ impl<'a> Scanner<'a> {
         }
 
         let lexeme = &self.source[start_offset..self.current_loc.offset];
+        if is_negative {
+            let mut num = i64::from_str_radix(lexeme, radix as u32).map_err(|_| LexError::InvalidNumber(lexeme.to_string(), self.current_loc))?;
+            num = -num;
+            return Ok(Token::Integer(num));
 
+        }
         i64::from_str_radix(lexeme, radix as u32)
             .map(Token::Integer) //if okay return integer token
             .map_err(|_| LexError::InvalidNumber(lexeme.to_string(), self.current_loc)) //else take parseinterror and
@@ -252,7 +257,7 @@ impl<'a> Iterator for Scanner<'a> {
             ':' => Ok(Token::Delimiter(Delimiter::Colon)),
             '?' => Ok(Token::Delimiter(Delimiter::QMark)),
 
-            '0'..='9' => self.read_number(c),
+            '0'..='9' => self.read_number(c, false),
             'a'..='z' | 'A'..='Z' | '_' => self.read_identifier(c),
             '"' => self.read_str(),
             '\'' => self.read_char_literal(),
@@ -275,6 +280,11 @@ impl<'a> Iterator for Scanner<'a> {
 
             '-' => {
                 if self.match_char('-') { Ok(Token::Operator(Operator::Dec)) }
+                else if matches!(self.peek(), Some('0'..='9')) {
+                    let char = self.advance()?;
+                    let num = self.read_number(char, true);
+                    num
+                }
                 else { Ok(Token::Operator(Operator::Minus)) }
             }
 

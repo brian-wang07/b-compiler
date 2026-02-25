@@ -72,7 +72,7 @@ impl <'a> Parser<'a> {
             if !(self.peek().token == Token::Delimiter(Delimiter::RParen)) {
               loop {
                 let arg = self.parse_expression(Precedence::None.bp().1)?;
-                args.push(Box::new(arg));
+                args.push(arg);
                 
                 if self.peek().token == Token::Delimiter(Delimiter::Comma) {
                   self.advance();

@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
 
 
   fn is_at_end(&self) -> bool {
-    matches!(self.peek().token, Token::EOF)
+    self.position >= self.tokens.len() || matches!(self.peek().token, Token::EOF)
   }
 
   //advance and return consumed token

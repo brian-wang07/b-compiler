@@ -7,7 +7,6 @@ use rustc_hash::FxHashMap;
 //a seperate ScopeId is not necessary; instead, keeping track of global and function scopes
 //sufficies.
 //ex: a = 5. check if a exists in function env -> check if a exists in global env -> report error.
-//FxHashMap is used for its faster, non-cryptographic hashing function.
 
 pub enum SymbolError {
   UndefinedSymbol,

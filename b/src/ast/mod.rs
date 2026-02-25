@@ -2,18 +2,13 @@ use crate::lexer::token::{SpannedToken};
 pub mod visitor;
 pub mod pretty_printer;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct AutoDecl<'a> {
-  pub name: SpannedToken<'a>,
-  pub size: Option<SpannedToken<'a>>
-}
 
 //rvalue is any temporary value, doesnt have position in memory
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr<'a> {
   Assign { lvalue: Box<Expr<'a>>, operator: SpannedToken<'a>, value: Box<Expr<'a>> }, //variable assignment
   Binary { left: Box<Expr<'a>>, operator: SpannedToken<'a>, right: Box<Expr<'a>> }, //binary op
-  Call { callee: Box<Expr<'a>>, arguments: Vec<Box<Expr<'a>>> }, //function call
+  Call { callee: Box<Expr<'a>>, arguments: Vec<Expr<'a>> }, //function call
   Grouping { expression: Box<Expr<'a>> }, //brackets
   Literal { value: SpannedToken<'a> }, 
   Unary { operator: SpannedToken<'a>, right: Box<Expr<'a>> }, //unary op
@@ -39,7 +34,7 @@ pub enum Stmt<'a> {
   While { condition: Box<Expr<'a>>, body: Box<Stmt<'a>> },
   Switch { condition: Box<Expr<'a>>, cases: Vec<Stmt<'a>> },
   Case { value: SpannedToken<'a>, body: Box<Stmt<'a>> },
-  Default,
+  Default {body: Box<Stmt<'a>>},
   Label { name: SpannedToken<'a>, body: Box<Stmt<'a>> },
   Goto { expression: Box<Expr<'a>> },
   Return { value: Option<Box<Expr<'a>>> }, //return und if Option<T> = None
@@ -48,27 +43,40 @@ pub enum Stmt<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+//parser entry point
 pub struct Program<'a> {
-  pub top_level: Vec<TopLevel<'a>>,
+  pub items: Vec<Item<'a>>,
 }
 
 //top only valid top levels are functions and global declarations
 #[derive(Debug, Clone, PartialEq)]
-pub enum TopLevel<'a> {
+pub enum Item<'a> {
   Function(Function<'a>),
   Global(Vec<GlobalDecl<'a>>),
 }
 
+
+
+
+
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Function<'a>{
   pub name: &'a SpannedToken<'a>,
-  pub params: Vec<&'a SpannedToken<'a>>,
-  pub body: Stmt<'a>,
+  pub params: Vec<SpannedToken<'a>>,
+  pub body: Box<Stmt<'a>>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GlobalDecl<'a> {
   pub name: &'a SpannedToken<'a>,
   pub size: Option<&'a SpannedToken<'a>>,
-  pub initializer: Option<Vec<&'a SpannedToken<'a>>>,
+  pub initializer: Option<Vec<SpannedToken<'a>>>,
+}
+
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct AutoDecl<'a> {
+  pub name: SpannedToken<'a>,
+  pub size: Option<SpannedToken<'a>>
 }

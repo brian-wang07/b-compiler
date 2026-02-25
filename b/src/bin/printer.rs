@@ -34,18 +34,14 @@ fn run(source: &str) {
       }
     }
 
-    for tok in &toks{
-        println!("{}", tok.token);
-    }
-
-
     let mut parser = Parser::new(&toks);
-    
-    match parser.parse_expression(0) {
-        Ok(expr) => {
+
+    match parser.parse_program() {
+        Ok(program) => {
+            println!("AST:\n{:#?}\n", program);
             let mut printer = AstPrinter::new();
-            let output = printer.print(&expr);
-            println!("AST: {}", output);
+            let output = printer.print_program(&program);
+            println!("Formatted:\n{}", output);
         }
         Err(e) => {
             eprintln!("Parse error: {:?}", e);

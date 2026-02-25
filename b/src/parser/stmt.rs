@@ -5,9 +5,6 @@ use super::{Parser, ParseError, precedence};
 
 //statement parsing: recursive descent
 impl <'a> Parser<'a> {
- //enforce first line being auto; after parsing '{', check for auto keyword.
- //after parsing next line, set flag auto_decl = false. If an auto decl is seen again
- //in that block, raise error 
 
  //helper for parsing global declarations
   fn parse_decl(&mut self, name: &'a SpannedToken<'a>) -> Result<GlobalDecl<'a>, ParseError<'a>> {
@@ -25,13 +22,13 @@ impl <'a> Parser<'a> {
         match self.peek().token {
           //specified array size
           Token::Integer(..) => {
-            let mut array_size = Some(self.advance());
+            array_size = Some(self.advance());
           },
 
           Token::Delimiter(Delimiter::RBrack) => {
             let mut array_size: Option<&SpannedToken<'_>> = None;
           },
-          _ => is_err = false,
+          _ => is_err = true,
         }
 
         if is_err {return Err(ParseError::UnknownToken(self.peek().clone())); }
@@ -47,7 +44,7 @@ impl <'a> Parser<'a> {
             }
             //parse initializers
             loop {
-              initializer_list.push(self.advance());
+              initializer_list.push(self.advance().clone());
               match self.peek().token {
 
                 Token::Delimiter(Delimiter::Comma) => {
@@ -57,10 +54,6 @@ impl <'a> Parser<'a> {
                     Token::Identifier(..) => break,
                     Token::Integer(..) | Token::CharLiteral(..) | Token::StringLiteral(..) => continue,
                     _ => is_err = true,
-                  }
-
-                  if is_err {
-                    return Err(ParseError::UnknownToken(self.peek().clone()));
                   }
                 }
 
@@ -97,7 +90,7 @@ impl <'a> Parser<'a> {
       Token::Integer(..) | Token::CharLiteral(..) | Token::StringLiteral(..) => {
         //scalar with initializer
         let mut initializer = Vec::new();
-        initializer.push(self.advance());
+        initializer.push(self.advance().clone());
         Ok(GlobalDecl {
           name: name,
           size: None,
@@ -140,20 +133,21 @@ impl <'a> Parser<'a> {
       let top = self.parse_top_level()?;
       tops.push(top)
     }  
-    Ok(Program{top_level: tops})
+    Ok(Program{items: tops})
   }
 
-  pub fn parse_top_level(&mut self) -> Result<TopLevel<'a>, ParseError<'a>> {
+  pub fn parse_top_level(&mut self) -> Result<Item<'a>, ParseError<'a>> {
     //only functions and specific declarations (outlined above) are valid at the top level.
     let mut name = self.advance();
     match self.peek().token {
       //var name followed by ( is a function
       Token::Delimiter(Delimiter::LParen) => {
+        self.advance();
         let mut params = Vec::new();
-        if !(self.peek().token == Token::Delimiter(Delimiter::LParen)) {
+        if !(self.peek().token == Token::Delimiter(Delimiter::RParen)) {
           loop {
             let arg = self.advance();
-            params.push(arg);
+            params.push(arg.clone());
 
             if self.peek().token == Token::Delimiter(Delimiter::Comma) {
               self.advance();
@@ -163,17 +157,19 @@ impl <'a> Parser<'a> {
         }
 
         self.expect(&Token::Delimiter(Delimiter::RParen))?;
-        Ok(TopLevel::Function(Function {
+        let body = self.parse_statement()?;
+        Ok(Item::Function(Function {
           name: name,
           params: params,
-          body: self.parse_statement()?,
+          body: Box::new(body),
         }))
       }
 
       //else, we have a global var decl, such as a, b[10], c;. 
       //one variable declared
       Token::Delimiter(Delimiter::Semicolon) => {
-        Ok(TopLevel::Global(vec![GlobalDecl {
+        self.advance();
+        Ok(Item::Global(vec![GlobalDecl {
           name: name,
           size: None,
           initializer: None,
@@ -181,7 +177,8 @@ impl <'a> Parser<'a> {
       }
 
       //multiple/array
-      Token::Delimiter(Delimiter::LBrack) | Token::Delimiter(Delimiter::Comma) => {
+      Token::Delimiter(Delimiter::LBrack) | Token::Delimiter(Delimiter::Comma) | Token::Integer(..) |
+      Token::StringLiteral(..) | Token::CharLiteral(..) => {
         let mut decls = Vec::new();
         let mut decl = self.parse_decl(name)?;
         decls.push(decl);
@@ -192,7 +189,7 @@ impl <'a> Parser<'a> {
           decls.push(decl);
         }
         self.expect(&Token::Delimiter(Delimiter::Semicolon))?;
-        Ok(TopLevel::Global(decls))
+        Ok(Item::Global(decls))
       }
 
       _ => Err(ParseError::UnknownToken(name.clone())),
@@ -202,21 +199,24 @@ impl <'a> Parser<'a> {
   }
 
   pub fn parse_statement(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
-    let t = self.advance();
+    let t = self.peek();
     match t.token {
   
-      Token::Delimiter(Delimiter::Semicolon) => Ok(Stmt::Null),
-      Token::Delimiter(Delimiter::LBrace) => self.parse_block(),
-      Token::Keyword(Keyword::Extrn) => self.parse_extrn(),
-      Token::Keyword(Keyword::If) => self.parse_if(),
-      Token::Keyword(Keyword::While) => self.parse_while(),
-      Token::Keyword(Keyword::Switch) => self.parse_switch(),
-      Token::Keyword(Keyword::Case) => self.parse_case(),
-      Token::Keyword(Keyword::Goto) => self.parse_goto(),
-      Token::Keyword(Keyword::Return) => self.parse_return(),
-
-
-      _ => Err(ParseError::UnknownToken(t.clone())),
+      Token::Delimiter(Delimiter::Semicolon) => {self.advance(); Ok(Stmt::Null)},
+      Token::Delimiter(Delimiter::LBrace) => {self.advance(); self.parse_block()},
+      Token::Keyword(Keyword::Extrn) => {self.advance(); self.parse_extrn()},
+      Token::Keyword(Keyword::If) => {self.advance(); self.parse_if()},
+      Token::Keyword(Keyword::While) => {self.advance(); self.parse_while()},
+      Token::Keyword(Keyword::Switch) => {self.advance(); self.parse_switch()},
+      Token::Keyword(Keyword::Case) => {self.advance(); self.parse_case()},
+      Token::Keyword(Keyword::Goto) => {self.advance(); self.parse_goto()},
+      Token::Keyword(Keyword::Return) => {self.advance(); self.parse_return()},
+      _ => {
+        if self.peek_next() == &Token::Delimiter(Delimiter::Colon) {
+          return self.parse_label();
+        }
+        self.parse_expr_stmt()
+      }
     }
   }
 
@@ -234,7 +234,14 @@ impl <'a> Parser<'a> {
       //valid auto
       if (self.peek().token == Token::Keyword(Keyword::Auto) && valid_auto_decl == true) {
         statements.push(self.parse_auto()?);
-        valid_auto_decl = false;
+        continue;
+      }
+
+      //extrn keeps auto valid
+      if (self.peek().token == Token::Keyword(Keyword::Extrn)) {
+        self.advance();
+        let statement = self.parse_extrn()?;
+        statements.push(statement);
         continue;
       }
 
@@ -242,6 +249,8 @@ impl <'a> Parser<'a> {
       let statement = self.parse_statement()?;
       valid_auto_decl = false;
       statements.push(statement);
+      //check for semicolon
+      self.expect(&Token::Delimiter(Delimiter::Semicolon));
     }
     self.expect(&Token::Delimiter(Delimiter::RBrace));
     Ok(Stmt::Block {
@@ -252,24 +261,54 @@ impl <'a> Parser<'a> {
 
   pub fn parse_auto(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
     let mut decls = Vec::new();  
-    while self.peek().token == Token::Delimiter(Delimiter::Comma) {
-      let mut var = self.advance();
-      if self.peek().token == Token::Delimiter(Delimiter::RBrack) {
-        self.advance();
-        let mut size = self.advance();
-        self.expect(&Token::Delimiter(Delimiter::RBrack));
-        decls.push(AutoDecl {
-          name: var.clone(),
-          size: Some(size.clone()),
-        });
+    let mut is_err = false;
+    self.advance(); //consume auto
+    let name = self.advance();
+    if self.peek().token == Token::Delimiter(Delimiter::LBrack) {
+      self.advance();
+      let size = self.advance();
+      self.expect(&Token::Delimiter(Delimiter::RBrack));
+      decls.push(AutoDecl{name: name.clone(), size: Some(size.clone())});
+    }
+    else {
+      decls.push(AutoDecl{name: name.clone(), size: None});
+    }
+    loop {
+      match self.peek().token {
+        Token::Delimiter(Delimiter::Semicolon) => {
+          break;
+        }
+
+        Token::Delimiter(Delimiter::Comma) => {
+          self.advance();
+          let name = self.advance();
+          match self.peek().token {
+
+            Token::Delimiter(Delimiter::Comma) | Token::Delimiter(Delimiter::Semicolon) => {
+              decls.push(AutoDecl{name: name.clone(), size: None});
+              continue;
+            }
+
+            Token::Delimiter(Delimiter::LBrack) => {
+              self.advance();
+              let size = self.advance();
+              self.expect(&Token::Delimiter(Delimiter::RBrack));
+              decls.push(AutoDecl{name: name.clone(), size: Some(size.clone())});
+            }
+
+            _ => {is_err = true;}
+          }
+          if is_err {
+            return Err(ParseError::UnknownToken(self.peek().clone()));
+          }
+        }
+
+        _ => is_err = true,
       }
-      else {
-        decls.push(AutoDecl {
-          name: var.clone(),
-          size: None,
-        });
+      if is_err {
+        return Err(ParseError::UnknownToken(self.peek().clone()));
       }
-      }
+    }
     self.expect(&Token::Delimiter(Delimiter::Semicolon));
     Ok(Stmt::Auto {
       declarations: decls,
@@ -300,6 +339,7 @@ impl <'a> Parser<'a> {
     self.expect(&Token::Delimiter(Delimiter::RParen))?;
     let then_branch = self.parse_statement()?;
     if self.peek().token == Token::Keyword(Keyword::Else) {
+      self.advance();
       let else_branch = self.parse_statement()?;
       return Ok(Stmt::If {
         condition: Box::new(condition),
@@ -320,6 +360,7 @@ impl <'a> Parser<'a> {
     //Syntax: while(condition) body
     self.expect(&Token::Delimiter(Delimiter::LParen))?;
     let condition = self.parse_expression(0)?;
+    self.expect(&Token::Delimiter(Delimiter::RParen))?;
     let body = self.parse_statement()?;
     Ok(Stmt::While {
       condition: Box::new(condition),
@@ -342,7 +383,13 @@ impl <'a> Parser<'a> {
           let case = self.parse_case()?;
           cases.push(case);
         }
-        Token::Delimiter(Delimiter::RBrack) => break,
+        Token::Keyword(Keyword::Default) => {
+          self.advance();
+          self.expect(&Token::Delimiter(Delimiter::Colon));
+          let body = self.parse_statement()?;
+          cases.push(Stmt::Default{body: Box::new(body)});
+        }
+        Token::Delimiter(Delimiter::RBrace) => break,
         _ => is_err = {is_err = true; break;}
 
       }
@@ -361,6 +408,7 @@ impl <'a> Parser<'a> {
 
   pub fn parse_case(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
     let value = self.advance();
+    self.expect(&Token::Delimiter(Delimiter::Colon));
     let body = self.parse_statement()?;
     Ok(Stmt::Case {
       value: value.clone(),
@@ -387,5 +435,22 @@ impl <'a> Parser<'a> {
     })
   }
 
+  pub fn parse_expr_stmt(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
+    let expr = self.parse_expression(0)?;
+    self.expect(&Token::Delimiter(Delimiter::Semicolon));
+    Ok(Stmt::Expression {
+      expression: Box::new(expr),
+    })
+  }
+
+  pub fn parse_label(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
+    let name = self.advance();
+    self.advance(); //consume colon
+    let body = self.parse_statement()?;
+    Ok(Stmt::Label {
+      name: name.clone(),
+      body: Box::new(body),
+    })
+  }
 
 }
