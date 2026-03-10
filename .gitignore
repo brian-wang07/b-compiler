@@ -6,6 +6,8 @@
 !*.b
 !*.pdf
 !*.sh
+!*.yml
+!*.html
 !Cargo.lock
 !Cargo.toml
 !.gitignore
@@ -17,3 +19,7 @@ b/dhat-heap.json
 
 # Criterion benchmark reports under target (generated output, not source)
 b/target/criterion/
+
+# Generated benchmark reports in docs/ (built by CI or publish.sh)
+docs/benchmarks/
+docs/memory/

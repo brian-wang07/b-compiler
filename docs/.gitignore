@@ -1,7 +1,2 @@
-# Override the root allowlist for docs/ (GitHub Pages)
-!*.html
-!*.svg
-!*.json
-!*.css
-!*.js
-!*.sh
+# Generated content — rebuilt by CI or docs/publish.sh
+# Root .gitignore ignores docs/benchmarks/ and docs/memory/

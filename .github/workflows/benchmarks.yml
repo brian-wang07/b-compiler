@@ -1,0 +1,58 @@
+name: Benchmark & Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            b/target
+          key: bench-${{ runner.os }}-${{ hashFiles('b/Cargo.lock') }}
+
+      - name: Run criterion benchmarks
+        working-directory: b
+        run: cargo bench --bench lexer_bench --bench parser_bench
+
+      - name: Run dhat memory benchmark
+        working-directory: b
+        run: cargo bench --bench memory_bench -- all
+
+      - name: Publish reports to docs/
+        run: bash docs/publish.sh
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+  deploy:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
