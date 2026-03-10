@@ -33,8 +33,8 @@ impl <'a> Parser<'a> {
       Token::Operator(Operator::Bang) | Token::Operator(Operator::Tilde) |
       Token::Operator(Operator::Inc) | Token::Operator(Operator::Dec) |
       Token::Operator(Operator::Amp) | Token::Operator(Operator::Star) => {
-        let right = self.parse_expression(Precedence::Unary.bp().1); //rhbp
-        Ok(Expr::Unary{ operator: t.clone(), right: Box::new(right.unwrap()) })
+        let right = self.parse_expression(Precedence::Unary.bp().1)?; //rhbp
+        Ok(Expr::Unary{ operator: t.clone(), right: Box::new(right) })
       },
 
       Token::Delimiter(Delimiter::LParen) => {
@@ -141,7 +141,7 @@ impl <'a> Parser<'a> {
     /// of the operators define the order of precedence.     
   pub fn parse_expression(&mut self, min_prec: u8) -> Result<Expr<'a>, ParseError<'a>> {
     //parse left hand side (nud)
-    let mut left = self.nud()?;
+    let mut left: Expr<'_> = self.nud()?;
     //while left bp has higher precedence than min bp (right bp), parse left denotation
     while self.peek_precedence().bp().0 > min_prec {
       left = self.led(left)?;

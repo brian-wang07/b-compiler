@@ -38,7 +38,7 @@ fn run(source: &str) {
 
     match parser.parse_program() {
         Ok(program) => {
-            println!("AST:\n{:#?}\n", program);
+            println!("AST:\n{:?}\n", program);
             let mut printer = AstPrinter::new();
             let output = printer.print_program(&program);
             println!("Formatted:\n{}", output);

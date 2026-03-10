@@ -5,3 +5,19 @@ edition = "2024"
 
 [dependencies]
 rustc-hash = "2.1.1"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+dhat = "0.3"
+
+[[bench]]
+name = "lexer_bench"
+harness = false
+
+[[bench]]
+name = "parser_bench"
+harness = false
+
+[[bench]]
+name = "memory_bench"
+harness = false

@@ -306,7 +306,7 @@ impl<'a> Iterator for Scanner<'a> {
             '<' => {
                 if self.match_char('<') { Ok(Token::Operator(Operator::LShift)) }
                 else if self.match_char('=') { Ok(Token::Operator(Operator::LessEq)) }
-                else { Ok(Token::Operator(Operator::Greater)) }
+                else { Ok(Token::Operator(Operator::Less)) }
             }
 
             _ => Err(LexError::UnexpectedChar(c, self.current_loc)),

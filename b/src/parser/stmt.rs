@@ -249,8 +249,6 @@ impl <'a> Parser<'a> {
       let statement = self.parse_statement()?;
       valid_auto_decl = false;
       statements.push(statement);
-      //check for semicolon
-      self.expect(&Token::Delimiter(Delimiter::Semicolon));
     }
     self.expect(&Token::Delimiter(Delimiter::RBrace));
     Ok(Stmt::Block {
@@ -325,7 +323,7 @@ impl <'a> Parser<'a> {
       decls.push(self.advance().clone());
     }
 
-    self.expect(&Token::Delimiter(Delimiter::Semicolon));
+    self.expect(&Token::Delimiter(Delimiter::Semicolon))?;
     Ok(Stmt::Extrn {
       names: decls,
     })
@@ -418,6 +416,7 @@ impl <'a> Parser<'a> {
 
   pub fn parse_goto(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
     let expr = self.parse_expression(0)?;
+    self.expect(&Token::Delimiter(Delimiter::Semicolon))?;
     Ok(Stmt::Goto {
       expression: Box::new(expr),
     })
@@ -425,11 +424,13 @@ impl <'a> Parser<'a> {
 
   pub fn parse_return(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
     if self.peek().token == Token::Delimiter(Delimiter::Semicolon) {
+      self.advance();
       return Ok(Stmt::Return {
         value: None,
       });
     }
     let expr = self.parse_expression(0)?;
+    self.expect(&Token::Delimiter(Delimiter::Semicolon))?;
     Ok(Stmt::Return {
       value: Some(Box::new(expr)),
     })

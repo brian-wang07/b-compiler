@@ -14,8 +14,8 @@ pub enum ParseError<'a> {
   UnknownToken(SpannedToken<'a>),
   UnexpectedEOF,
   RValueAssign(SpannedToken<'a>),
-  AutoRedecl(SpannedToken<'a>),
   UnspecifiedArraySizeInitialization(SpannedToken<'a>),
+  AutoRedecl(SpannedToken<'a>),
 }
 
 #[derive(Debug)]
@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
 
 
   fn is_at_end(&self) -> bool {
-    self.position >= self.tokens.len() || matches!(self.peek().token, Token::EOF)
+    matches!(self.peek().token, Token::EOF)
   }
 
   //advance and return consumed token

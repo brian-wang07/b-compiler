@@ -1,0 +1,7 @@
+# Override the root allowlist for docs/ (GitHub Pages)
+!*.html
+!*.svg
+!*.json
+!*.css
+!*.js
+!*.sh

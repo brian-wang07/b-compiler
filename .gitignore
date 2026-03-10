@@ -5,8 +5,15 @@
 !*.rs
 !*.b
 !*.pdf
+!*.sh
 !Cargo.lock
 !Cargo.toml
 !.gitignore
 
 target/
+
+# dhat heap profile output (in working dir, not docs/)
+b/dhat-heap.json
+
+# Criterion benchmark reports under target (generated output, not source)
+b/target/criterion/
