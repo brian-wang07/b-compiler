@@ -79,7 +79,7 @@ jobs:
       - name: Benchmark current version
         working-directory: b
         run: |
-          BASELINE_SAVED="${{ steps.baseline.outputs.saved }}"
+          BASELINE_SAVED="${{ steps.baseline.outputs.saved || 'false' }}"
           if [[ "${BASELINE_SAVED}" == "true" ]]; then
             cargo bench --bench lexer_bench --bench parser_bench -- --baseline previous
           else
@@ -135,8 +135,15 @@ jobs:
           # Generate versions/index.html
           bash docs/gen_versions_index.sh site/versions
 
+          # Record whether versions-archive has content (for conditional cache save)
+          if [[ -n "$(ls -A versions-archive 2>/dev/null)" ]]; then
+            echo "HAS_VERSIONS=true" >> "$GITHUB_ENV"
+          else
+            echo "HAS_VERSIONS=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Save versions archive
-        if: always()
+        if: ${{ env.HAS_VERSIONS == 'true' }}
         uses: actions/cache/save@v4
         with:
           path: versions-archive
@@ -150,6 +157,7 @@ jobs:
   deploy:
     needs: benchmark
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -157,3 +165,5 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 600000
