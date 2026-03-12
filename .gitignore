@@ -23,3 +23,6 @@ b/target/criterion/
 # Generated benchmark reports in docs/ (built by CI or publish.sh)
 docs/benchmarks/
 docs/memory/
+docs/versions/
+site-local/
+test_pages_local.sh

@@ -3,6 +3,7 @@ name: Benchmark & Deploy Pages
 on:
   push:
     branches: [main]
+    tags: ['v*']
   workflow_dispatch:
 
 permissions:
@@ -12,13 +13,15 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   benchmark:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -30,21 +33,118 @@ jobs:
             b/target
           key: bench-${{ runner.os }}-${{ hashFiles('b/Cargo.lock') }}
 
-      - name: Run criterion benchmarks
+      # --- Determine current and previous tags ---
+      - name: Resolve tags
+        id: tags
+        run: |
+          IS_TAG=false
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            IS_TAG=true
+            CURRENT_TAG="${{ github.ref_name }}"
+            PREV_TAG=$(git tag --sort=-version:refname | grep -v "^${CURRENT_TAG}$" | head -1 || true)
+          else
+            CURRENT_TAG="latest"
+            PREV_TAG=$(git tag --sort=-version:refname | head -1 || true)
+          fi
+          echo "current=${CURRENT_TAG}" >> "$GITHUB_OUTPUT"
+          echo "previous=${PREV_TAG}" >> "$GITHUB_OUTPUT"
+          echo "is_tag=${IS_TAG}" >> "$GITHUB_OUTPUT"
+          echo "Tags — current: ${CURRENT_TAG}, previous: ${PREV_TAG}, is_tag: ${IS_TAG}"
+
+      # --- Baseline: benchmark the previous tag ---
+      - name: Benchmark previous tag (baseline)
+        if: steps.tags.outputs.previous != ''
+        id: baseline
+        run: |
+          PREV_TAG="${{ steps.tags.outputs.previous }}"
+          # Check if the old tag has bench targets before attempting
+          if git show "${PREV_TAG}:b/benches/lexer_bench.rs" &>/dev/null; then
+            echo "Old tag has bench targets — building baseline..."
+            git checkout "${PREV_TAG}"
+            cd b
+            if cargo bench --bench lexer_bench --bench parser_bench -- --save-baseline previous; then
+              echo "saved=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::Baseline benchmark failed for ${PREV_TAG}"
+              echo "saved=false" >> "$GITHUB_OUTPUT"
+            fi
+            cd ..
+            git checkout -
+          else
+            echo "::notice::Tag ${PREV_TAG} has no bench targets — skipping baseline."
+            echo "saved=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # --- Current: benchmark with comparison ---
+      - name: Benchmark current version
         working-directory: b
-        run: cargo bench --bench lexer_bench --bench parser_bench
+        run: |
+          BASELINE_SAVED="${{ steps.baseline.outputs.saved }}"
+          if [[ "${BASELINE_SAVED}" == "true" ]]; then
+            cargo bench --bench lexer_bench --bench parser_bench -- --baseline previous
+          else
+            cargo bench --bench lexer_bench --bench parser_bench
+          fi
 
       - name: Run dhat memory benchmark
         working-directory: b
         run: cargo bench --bench memory_bench -- all
 
-      - name: Publish reports to docs/
+      # --- Build docs ---
+      - name: Publish reports
         run: bash docs/publish.sh
+
+      # --- Assemble site with version history ---
+      - name: Restore versions archive
+        uses: actions/cache/restore@v4
+        with:
+          path: versions-archive
+          key: versions-archive-dummy
+          restore-keys: versions-archive-
+
+      - name: Assemble site
+        env:
+          CURRENT_TAG: ${{ steps.tags.outputs.current }}
+          IS_TAG: ${{ steps.tags.outputs.is_tag }}
+          PREV_TAG: ${{ steps.tags.outputs.previous }}
+        run: |
+          mkdir -p site/versions
+
+          # Copy main site content
+          cp docs/index.html site/
+          cp -r docs/benchmarks site/
+          cp -r docs/memory site/
+
+          # Restore archived versions from cache
+          if [[ -d versions-archive ]]; then
+            cp -r versions-archive/* site/versions/ 2>/dev/null || true
+          fi
+
+          # Archive current version if this is a tag push
+          if [[ "${IS_TAG}" == "true" ]]; then
+            mkdir -p "site/versions/${CURRENT_TAG}"
+            cp -r docs/benchmarks/* "site/versions/${CURRENT_TAG}/"
+            echo "${PREV_TAG}" > "site/versions/${CURRENT_TAG}/.baseline"
+
+            mkdir -p "versions-archive/${CURRENT_TAG}"
+            cp -r docs/benchmarks/* "versions-archive/${CURRENT_TAG}/"
+            echo "${PREV_TAG}" > "versions-archive/${CURRENT_TAG}/.baseline"
+          fi
+
+          # Generate versions/index.html
+          bash docs/gen_versions_index.sh site/versions
+
+      - name: Save versions archive
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: versions-archive
+          key: versions-archive-${{ github.run_id }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: site
 
   deploy:
     needs: benchmark

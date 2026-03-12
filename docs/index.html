@@ -80,11 +80,11 @@
     <p class="subtitle">Runtime, memory, and hardware-level performance data for the lexer and parser.</p>
 
     <!-- Runtime Benchmarks -->
-    <h2><span class="badge badge-runtime">RUNTIME</span> Criterion Benchmarks</h2>
+    <h2><span class="badge badge-runtime">RUNTIME</span> Criterion Benchmarks <span style="color:var(--text-muted);font-size:0.8rem;font-weight:400">(vs. previous tag)</span></h2>
 
     <div class="card">
         <h3><a href="benchmarks/report/index.html">Overview Report</a></h3>
-        <p>Top-level Criterion index with links to every individual benchmark.</p>
+        <p>Top-level Criterion index comparing the latest build against the previous tagged release.</p>
     </div>
 
     <div class="card">
@@ -133,6 +133,15 @@
         </p>
     </div>
 
+    <!-- Version History -->
+    <h2><span class="badge badge-runtime">HISTORY</span> Version Archive</h2>
+
+    <div class="card">
+        <h3><a href="versions/">Browse All Versions</a></h3>
+        <p>Criterion reports archived for each tagged release. Click into a version to see its
+        full benchmark results and comparison against the prior tag.</p>
+    </div>
+
     <!-- Hardware Counters -->
     <h2><span class="badge badge-hw">HARDWARE</span> perf stat</h2>
 
@@ -146,7 +155,8 @@
     </div>
 
     <p class="updated">
-        Updated by running <code>./docs/publish.sh</code> after <code>cargo bench</code>.
+        Updated automatically on push to <code>main</code> or tag creation.
+        Version history is archived on each tagged release.
     </p>
 </body>
 </html>
