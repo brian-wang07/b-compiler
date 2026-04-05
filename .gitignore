@@ -1,6 +1,4 @@
 *
-
-
 !*/
 !*.rs
 !*.b
@@ -11,6 +9,7 @@
 !Cargo.lock
 !Cargo.toml
 !.gitignore
+!README.md
 
 target/
 
