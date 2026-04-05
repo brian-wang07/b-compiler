@@ -1,31 +1,16 @@
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Location {
-    pub offset: usize,
-    pub line: usize,
-    pub column: usize,
-}
-
-impl Default for Location {
-    fn default() -> Self {
-        Location {
-            offset: 0,
-            line: 0,
-            column: 0,
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
+//derive line + col number via lexer; store \n chars in vec and bin search
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Span {
-    pub start: Location,
-    pub end: Location,
+    pub start: u32, //usize is not necessary, and is double the size.
+    pub end: u32,
 }
 
+//debugging
 impl Default for Span {
-    fn default() -> Self {     
+    fn default() -> Self {
         Span {
-            start: Location::default(),
-            end: Location::default()
+            start: 0,
+            end: 0
         }
     }
 }

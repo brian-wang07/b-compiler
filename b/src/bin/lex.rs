@@ -32,11 +32,9 @@ fn main() {
         match result {
             Ok(spanned_token) => {
                 println!(
-                    "[{:?}] {:<15} @ {}:{}", 
-                    spanned_token.span.start.offset,
+                    "[{:?}] {:<15}", 
+                    spanned_token.span.start,
                     format!("{:?}", spanned_token.token),
-                    spanned_token.span.start.line,
-                    spanned_token.span.start.column
                 );
             },
             Err(e) => {

@@ -1,10 +1,11 @@
-use crate::common::span::{Location, Span};
+use crate::common::span::Span;
 use crate::lexer::token::{SpannedToken, Token, Keyword, Delimiter, Operator};
 use super::LexError;
 
 pub struct Scanner<'a> {
+    cols: Vec<u32>,
     chars: std::iter::Peekable<std::str::Chars<'a>>,
-    current_loc: Location,
+    current_loc: Span,
     source: &'a str,
 }
 
@@ -12,24 +13,24 @@ impl<'a> Scanner<'a> {
     
     pub fn new(source: &'a str) -> Self {
         Self {
+            cols: Vec::new(),
             chars: source.chars().peekable(),
-            current_loc: Location { offset: 0, line: 1, column: 1 },
+            current_loc: Span { start: 0, end: 0},
             source
         }
     }
 
     //advances the scanner, consuming lexeme
     fn advance(&mut self) -> Option<char> {
-        let c = self.chars.next()?; //if none return none
 
-        self.current_loc.offset += c.len_utf8(); //usually 1, except for special characters
+        let c = self.chars.next()?; //if none return none
+        self.current_loc.end += c.len_utf8() as u32; //usually 1, except for special characters
+
 
         if c == '\n' {
-            self.current_loc.line += 1;
-            self.current_loc.column = 1;
-        } else {
-            self.current_loc.column += 1;
+            self.cols.push(self.current_loc.end);
         }
+
 
         Some(c)
     }
@@ -46,7 +47,6 @@ impl<'a> Scanner<'a> {
 
     //match next character with an expected value
     fn match_char(&mut self, expected: char) -> bool {
-        //no implicit self
         if self.peek() == Some(expected) {
             self.advance();
             return true;
@@ -55,10 +55,8 @@ impl<'a> Scanner<'a> {
     }
 
     //scan numeric literals; in B, octal numbers are denoted with a leading 0. 
-    fn read_number(&mut self, first_char: char, is_negative: bool) -> Result<Token<'a>, LexError> { //enum variants
-                                                                              //cannot be return
-                                                                              //types
-        let start_offset = self.current_loc.offset - first_char.len_utf8();
+    fn read_number(&mut self, first_char: char, is_negative: bool) -> Result<Token<'a>, LexError> {
+        let start_offset = self.current_loc.end - (first_char.len_utf8() as u32);
         let radix = if first_char =='0' { 8 } else { 10 };
         
         //advance to end of number
@@ -70,7 +68,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let lexeme = &self.source[start_offset..self.current_loc.offset];
+        let lexeme = &self.source[start_offset as usize .. self.current_loc.end as usize];
         if is_negative {
             let mut num = i64::from_str_radix(lexeme, radix as u32).map_err(|_| LexError::InvalidNumber(lexeme.to_string(), self.current_loc))?;
             num = -num;
@@ -85,7 +83,7 @@ impl<'a> Scanner<'a> {
 
     //scan variable identifiers/keywords; read until peek() not alphanumeric
     fn read_identifier(&mut self, first_char: char) -> Result<Token<'a>, LexError> {
-        let start_offset = self.current_loc.offset - first_char.len_utf8();
+        let start_offset = self.current_loc.end - (first_char.len_utf8() as u32);
 
         //advance to end of keyword/variable name
         while let Some(c) = self.peek() {
@@ -96,7 +94,7 @@ impl<'a> Scanner<'a> {
             }
         }
 
-        let lexeme = &self.source[start_offset..self.current_loc.offset];
+        let lexeme = &self.source[start_offset as usize .. self.current_loc.end as usize];
 
         //match keyword, else variable identifier
         let token = match lexeme {
@@ -240,7 +238,7 @@ impl<'a> Iterator for Scanner<'a> {
         //check for EOF
         let _ = self.peek()?;
 
-        let start_loc = self.current_loc;
+        let start_loc = self.current_loc.start;
 
         //consume first char
         let c = self.advance()?;
@@ -315,7 +313,7 @@ impl<'a> Iterator for Scanner<'a> {
         
         let token = result.map(|t| SpannedToken {
             token: t,
-            span: Span { start: start_loc, end: self.current_loc}
+            span: Span { start: start_loc, end: self.current_loc.end}
         });
 
         Some(token)

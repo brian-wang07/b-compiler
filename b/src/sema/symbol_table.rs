@@ -32,7 +32,6 @@ pub struct Interner {
   lookup: FxHashMap<String, SymbolId>,
 }
 
-
 pub struct Symbol {   
   //holds metadata for identifiers
   name: SymbolId,

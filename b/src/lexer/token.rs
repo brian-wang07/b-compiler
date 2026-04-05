@@ -1,7 +1,8 @@
+//TODO: Maybe move this to common/
 use crate::common::span::Span;
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Copy)]
 pub enum Keyword {
     Auto,
     Extrn,
@@ -72,7 +73,6 @@ pub enum Delimiter {
 }
 
 //main Token Enum
-
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token<'a> {
     Keyword(Keyword),
@@ -91,6 +91,7 @@ pub struct SpannedToken<'a> {
     pub token: Token<'a>,
     pub span: Span,
 }
+
 
 impl fmt::Display for Keyword {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

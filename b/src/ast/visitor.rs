@@ -22,7 +22,7 @@ pub trait ExprVisitor<T> {
 pub trait StmtVisitor<T> {
   fn visit_block(&mut self, statements: &[Stmt]) -> T;
   fn visit_auto(&mut self, declarations: &[AutoDecl]) -> T;
-  fn visit_extrn(&mut self, names: &[SpannedToken]) -> T;
+  fn visit_extrn(&mut self, names: &[&SpannedToken]) -> T;
   fn visit_expression(&mut self, expression: &Expr) -> T;
   fn visit_if(&mut self, condition: &Expr, then_branch: &Stmt, else_branch: Option<&Stmt>) -> T;
   fn visit_while(&mut self, condition: &Expr, body: &Stmt) -> T;
@@ -37,7 +37,7 @@ pub trait StmtVisitor<T> {
 
 //top level constructs; walk program iterates over items
 pub trait ItemVisitor<T> {
-  fn visit_function(&mut self, name: &SpannedToken, params: &[SpannedToken], body: &Stmt) -> T;
+  fn visit_function(&mut self, name: &SpannedToken, params: &[&SpannedToken], body: &Stmt) -> T;
   fn visit_global(&mut self, decls: &[GlobalDecl]) -> T;
 }
 

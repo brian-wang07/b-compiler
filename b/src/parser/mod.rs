@@ -11,11 +11,11 @@ pub mod stmt;
 #[derive(Debug)]
 pub enum ParseError<'a> {
   UnexpectedToken(Expected<'a>),
-  UnknownToken(SpannedToken<'a>),
+  UnknownToken(&'a SpannedToken<'a>),
   UnexpectedEOF,
-  RValueAssign(SpannedToken<'a>),
-  UnspecifiedArraySizeInitialization(SpannedToken<'a>),
-  AutoRedecl(SpannedToken<'a>),
+  RValueAssign(&'a SpannedToken<'a>),
+  UnspecifiedArraySizeInitialization(&'a SpannedToken<'a>),
+  AutoRedecl(&'a SpannedToken<'a>),
 }
 
 #[derive(Debug)]

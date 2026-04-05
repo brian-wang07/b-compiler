@@ -31,7 +31,7 @@ impl <'a> Parser<'a> {
           _ => is_err = true,
         }
 
-        if is_err {return Err(ParseError::UnknownToken(self.peek().clone())); }
+        if is_err {return Err(ParseError::UnknownToken(self.peek())); }
 
         self.expect(&Token::Delimiter(Delimiter::RBrack))?;
 
@@ -40,11 +40,11 @@ impl <'a> Parser<'a> {
           //Array initializers can only be constant rvalues (no ident)
           Token::Integer(..) | Token::CharLiteral(..) | Token::StringLiteral(..) => {
             if array_size == None {
-              return Err(ParseError::UnspecifiedArraySizeInitialization(self.peek().clone()));
+              return Err(ParseError::UnspecifiedArraySizeInitialization(self.peek()));
             }
             //parse initializers
             loop {
-              initializer_list.push(self.advance().clone());
+              initializer_list.push(self.advance());
               match self.peek().token {
 
                 Token::Delimiter(Delimiter::Comma) => {
@@ -62,7 +62,7 @@ impl <'a> Parser<'a> {
               }
 
               if is_err {
-                return Err(ParseError::UnknownToken(self.peek().clone()));
+                return Err(ParseError::UnknownToken(self.peek()));
               }
             }
             Ok(GlobalDecl {
@@ -82,7 +82,7 @@ impl <'a> Parser<'a> {
           }
 
           _ => {
-            return Err(ParseError::UnknownToken(self.peek().clone()));
+            return Err(ParseError::UnknownToken(self.peek()));
           }
         }
       }
@@ -90,7 +90,7 @@ impl <'a> Parser<'a> {
       Token::Integer(..) | Token::CharLiteral(..) | Token::StringLiteral(..) => {
         //scalar with initializer
         let mut initializer = Vec::new();
-        initializer.push(self.advance().clone());
+        initializer.push(self.advance());
         Ok(GlobalDecl {
           name: name,
           size: None,
@@ -108,7 +108,7 @@ impl <'a> Parser<'a> {
       }
 
       _ => {
-        return Err(ParseError::UnknownToken(self.peek().clone()));
+        return Err(ParseError::UnknownToken(self.peek()));
       }
     }
   }
@@ -147,7 +147,7 @@ impl <'a> Parser<'a> {
         if !(self.peek().token == Token::Delimiter(Delimiter::RParen)) {
           loop {
             let arg = self.advance();
-            params.push(arg.clone());
+            params.push(arg);
 
             if self.peek().token == Token::Delimiter(Delimiter::Comma) {
               self.advance();
@@ -192,7 +192,7 @@ impl <'a> Parser<'a> {
         Ok(Item::Global(decls))
       }
 
-      _ => Err(ParseError::UnknownToken(name.clone())),
+      _ => Err(ParseError::UnknownToken(name)),
 
     }
 
@@ -228,7 +228,7 @@ impl <'a> Parser<'a> {
 
       //auto declared not as first statement
       if (self.peek().token == Token::Keyword(Keyword::Auto) && valid_auto_decl == false) {
-        return Err(ParseError::AutoRedecl(self.peek().clone()));
+        return Err(ParseError::AutoRedecl(self.peek()));
       }
 
       //valid auto
@@ -266,10 +266,10 @@ impl <'a> Parser<'a> {
       self.advance();
       let size = self.advance();
       self.expect(&Token::Delimiter(Delimiter::RBrack));
-      decls.push(AutoDecl{name: name.clone(), size: Some(size.clone())});
+      decls.push(AutoDecl{name: name, size: Some(size)});
     }
     else {
-      decls.push(AutoDecl{name: name.clone(), size: None});
+      decls.push(AutoDecl{name: name, size: None});
     }
     loop {
       match self.peek().token {
@@ -283,7 +283,7 @@ impl <'a> Parser<'a> {
           match self.peek().token {
 
             Token::Delimiter(Delimiter::Comma) | Token::Delimiter(Delimiter::Semicolon) => {
-              decls.push(AutoDecl{name: name.clone(), size: None});
+              decls.push(AutoDecl{name: name, size: None});
               continue;
             }
 
@@ -291,20 +291,20 @@ impl <'a> Parser<'a> {
               self.advance();
               let size = self.advance();
               self.expect(&Token::Delimiter(Delimiter::RBrack));
-              decls.push(AutoDecl{name: name.clone(), size: Some(size.clone())});
+              decls.push(AutoDecl{name: name, size: Some(size)});
             }
 
             _ => {is_err = true;}
           }
           if is_err {
-            return Err(ParseError::UnknownToken(self.peek().clone()));
+            return Err(ParseError::UnknownToken(self.peek()));
           }
         }
 
         _ => is_err = true,
       }
       if is_err {
-        return Err(ParseError::UnknownToken(self.peek().clone()));
+        return Err(ParseError::UnknownToken(self.peek()));
       }
     }
     self.expect(&Token::Delimiter(Delimiter::Semicolon));
@@ -317,10 +317,10 @@ impl <'a> Parser<'a> {
 
   pub fn parse_extrn(&mut self) -> Result<Stmt<'a>, ParseError<'a>> {
     let mut decls = Vec::new();
-    decls.push(self.advance().clone());
+    decls.push(self.advance());
     while self.peek().token == Token::Delimiter(Delimiter::Comma) {
       self.advance();
-      decls.push(self.advance().clone());
+      decls.push(self.advance());
     }
 
     self.expect(&Token::Delimiter(Delimiter::Semicolon))?;
@@ -393,7 +393,7 @@ impl <'a> Parser<'a> {
       }
     }
     if is_err {
-      return Err(ParseError::UnknownToken(self.peek().clone()))
+      return Err(ParseError::UnknownToken(self.peek()))
     }
     self.advance();
     Ok(Stmt::Switch {

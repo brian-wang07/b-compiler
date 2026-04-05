@@ -104,7 +104,7 @@ impl StmtVisitor<String> for AstPrinter {
     format!("{}(expr {})", self.indent_str(), self.print_expr(expression))
   }
 
-  fn visit_extrn(&mut self, names: &[SpannedToken]) -> String {
+  fn visit_extrn(&mut self, names: &[&SpannedToken]) -> String {
     let names_str: Vec<String> = names.iter().map(|n| format!("{}", n.token)).collect();
     format!("{}(extrn {})", self.indent_str(), names_str.join(" "))
   }
@@ -183,7 +183,7 @@ impl StmtVisitor<String> for AstPrinter {
 
 impl ItemVisitor<String> for AstPrinter {
 
-  fn visit_function(&mut self, name: &SpannedToken, params: &[SpannedToken], body: &Stmt) -> String {
+  fn visit_function(&mut self, name: &SpannedToken, params: &[&SpannedToken], body: &Stmt) -> String {
     let params_str: Vec<String> = params.iter().map(|p| format!("{}", p.token)).collect();
     let mut result = format!("(fn {} ({})\n", name.token, params_str.join(" "));
     self.indent += 1;

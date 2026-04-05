@@ -20,21 +20,20 @@ impl <'a> Parser<'a> {
   /// negation, etc.)
   fn nud(&mut self) -> Result<Expr<'a>, ParseError<'a>> {
 
-    let t = self.advance(); //need to clone :( transfer reference ownership from parser to t
-    //clone in return, so you dont lose lifetime annotation
+    let t = self.advance(); 
     match &t.token {
 
       Token::Integer(_) | Token::CharLiteral(_) |
-      Token::StringLiteral(_) => Ok(Expr::Literal{ value: t.clone() }),
+      Token::StringLiteral(_) => Ok(Expr::Literal{ value: t }),
 
-      Token::Identifier(_) => Ok(Expr::Variable{ name: t.clone() }),
+      Token::Identifier(_) => Ok(Expr::Variable{ name: t }),
 
       Token::Operator(Operator::Plus) | Token::Operator(Operator::Minus) | 
       Token::Operator(Operator::Bang) | Token::Operator(Operator::Tilde) |
       Token::Operator(Operator::Inc) | Token::Operator(Operator::Dec) |
       Token::Operator(Operator::Amp) | Token::Operator(Operator::Star) => {
         let right = self.parse_expression(Precedence::Unary.bp().1)?; //rhbp
-        Ok(Expr::Unary{ operator: t.clone(), right: Box::new(right) })
+        Ok(Expr::Unary{ operator: t, right: Box::new(right) })
       },
 
       Token::Delimiter(Delimiter::LParen) => {
@@ -45,7 +44,7 @@ impl <'a> Parser<'a> {
 
 
 
-      _ => Err(ParseError::UnknownToken(t.clone())),
+      _ => Err(ParseError::UnknownToken(t)),
             
       }
 
@@ -56,7 +55,7 @@ impl <'a> Parser<'a> {
   fn led(&mut self, left: Expr<'a>) -> Result<Expr<'a>, ParseError<'a>> {
     //if we are here, literal tokens have already been parsed. for prefix, it goes nud -> parse_expr -> (grouping) -> parse_expr -> nud.
     //thus expect an operator token, or else we have something like ab + c.
-    let op = self.advance().clone(); //op has ownership (cringe ahh clone again, but too lazy to change advance)
+    let op = self.advance(); 
     
     match op.token {
       Token::Integer(_) | Token::StringLiteral(_) | 
