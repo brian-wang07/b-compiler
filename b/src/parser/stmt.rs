@@ -409,7 +409,7 @@ impl <'a> Parser<'a> {
     self.expect(&Token::Delimiter(Delimiter::Colon));
     let body = self.parse_statement()?;
     Ok(Stmt::Case {
-      value: value.clone(),
+      value: value,
       body: Box::new(body),
     })
   }
@@ -449,7 +449,7 @@ impl <'a> Parser<'a> {
     self.advance(); //consume colon
     let body = self.parse_statement()?;
     Ok(Stmt::Label {
-      name: name.clone(),
+      name: name,
       body: Box::new(body),
     })
   }

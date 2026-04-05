@@ -1,4 +1,4 @@
-use crate::lexer::token::{SpannedToken, Keyword, Operator};
+use crate::lexer::token::SpannedToken;
 pub mod visitor;
 pub mod pretty_printer;
 
@@ -6,16 +6,17 @@ pub mod pretty_printer;
 //rvalue is any temporary value, doesnt have position in memory
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr<'a> {
-  Assign { lvalue: Box<Expr<'a>>, operator: Operator, value: Box<Expr<'a>> }, //variable assignment
-  Binary { left: Box<Expr<'a>>, operator: Operator, right: Box<Expr<'a>> }, //binary op
+  Assign { lvalue: Box<Expr<'a>>, operator: &'a SpannedToken<'a>, value: Box<Expr<'a>> }, //variable assignment
+  Binary { left: Box<Expr<'a>>, operator: &'a SpannedToken<'a>, right: Box<Expr<'a>> }, //binary op
+  Bitwise { left: Box<Expr<'a>>, operator: &'a SpannedToken<'a>, right: Box<Expr<'a>> }, //bitwise op
   Call { callee: Box<Expr<'a>>, arguments: Vec<Expr<'a>> }, //function call
   Grouping { expression: Box<Expr<'a>> }, //brackets
-  Literal { value: Lexeme<'a> }, 
-  Unary { operator: Operator, right: Box<Expr<'a>> }, //unary op
-  Variable { name: Lexeme<'a> }, //variable use (symbol table)
+  Literal { value: &'a SpannedToken<'a> },
+  Unary { operator: &'a SpannedToken<'a>, right: Box<Expr<'a>> }, //unary op
+  Variable { name: &'a SpannedToken<'a> }, //variable use (symbol table)
   Get { target: Box<Expr<'a>>, index: Box<Expr<'a>>}, //array index a[10]
   Ternary { condition: Box<Expr<'a>>, then_branch: Box<Expr<'a>>, else_branch: Box<Expr<'a>>},
-  Postfix { left: Box<Expr<'a>>, operator: Operator} //post inc/dec
+  Postfix { left: Box<Expr<'a>>, operator: &'a SpannedToken<'a>} //post inc/dec
 
 }
 
@@ -31,9 +32,9 @@ pub enum Stmt<'a> {
   If { condition: Box<Expr<'a>>, then_branch: Box<Stmt<'a>>, else_branch: Option<Box<Stmt<'a>>> }, //else branch can fall through
   While { condition: Box<Expr<'a>>, body: Box<Stmt<'a>> },
   Switch { condition: Box<Expr<'a>>, cases: Vec<Stmt<'a>> },
-  Case { value: SpannedToken<'a>, body: Box<Stmt<'a>> },
+  Case { value: &'a SpannedToken<'a>, body: Box<Stmt<'a>> },
   Default {body: Box<Stmt<'a>>},
-  Label { name: Lexeme<'a>, body: Box<Stmt<'a>> },
+  Label { name: &'a SpannedToken<'a>, body: Box<Stmt<'a>> },
   Goto { expression: Box<Expr<'a>> },
   Return { value: Option<Box<Expr<'a>>> }, //return und if Option<T> = None
   Null,
@@ -53,16 +54,6 @@ pub enum Item<'a> {
   Global(Vec<GlobalDecl<'a>>),
 }
 
-
-//enum to hold literal types in AST - seperate from tokens so that 'src lifetime can be freed 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Lexeme<'a> {
-  Int(i64),
-  Str(&'a str),
-  Char(i64),
-  Ident(&'a str),
-  Kw(Keyword), 
-}
 
 
 
